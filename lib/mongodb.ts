@@ -13,18 +13,29 @@ if (!cached) {
 }
 
 async function dbConnect() {
-  if (cached.conn) {
+  // اگه اتصال کش‌شده داریم، چک کن واقعاً زنده‌ست یا نه
+  if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
   }
 
+  // اگه اتصال مرده یا وجود نداره، کش رو ریست کن
+  cached.conn = null;
+  cached.promise = null;
+
   if (!cached.promise) {
+    const opts = {
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 8000, // اگه ۸ ثانیه طول کشید و وصل نشد، خطا بده (نه اینکه هنگ کنه)
+      socketTimeoutMS: 20000,
+      maxPoolSize: 5,
+    };
+
     cached.promise = mongoose
-      .connect(MONGODB_URI)
+      .connect(MONGODB_URI, opts)
       .then((mongoose) => {
         return mongoose;
       })
       .catch((err) => {
-        // اگه اتصال شکست خورد، promise رو ریست کن تا دفعه‌ی بعد دوباره تلاش کنه
         cached.promise = null;
         throw err;
       });
