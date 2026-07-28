@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/components/ThemeContext";
+import { CartProvider } from "@/components/CartContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,16 +35,18 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans selection:bg-blue-600 selection:text-white bg-white text-gray-900 dark:bg-[#0f1217] dark:text-white transition-colors duration-500">
         <ThemeProvider>
-          {/* هدر سایت */}
-          <Navbar />
+          <CartProvider>
+            {/* هدر سایت */}
+            <Navbar />
 
-          {/* محتوای اصلی تمام صفحات */}
-          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {children}
-          </main>
+            {/* محتوای اصلی تمام صفحات */}
+            <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              {children}
+            </main>
 
-          {/* فوتر سایت */}
-          <Footer />
+            {/* فوتر سایت */}
+            <Footer />
+          </CartProvider>
         </ThemeProvider>
       </body>
     </html>

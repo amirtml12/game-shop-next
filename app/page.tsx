@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import Slider from "@/components/Slider";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useCart } from "@/components/CartContext";
 
 // تایپ ساده بازی
 interface IGame {
@@ -26,8 +26,8 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
 
-  // سبد خرید (همون کلید و فرمتی که CartPage استفاده می‌کنه)
-  const [cart, setCart] = useLocalStorage<IGame[]>("cart", []);
+  // سبد خرید مشترک (از CartContext)
+  const { addToCart, isInCart } = useCart();
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -52,15 +52,13 @@ export default function Home() {
     return true;
   });
 
-  const isInCart = (id: string) => cart.some((item) => item._id === id);
-
   const handleAddToCart = (e: React.MouseEvent, game: IGame) => {
     // جلوگیری از رفتن به صفحه جزئیات وقتی روی دکمه کلیک می‌شه
     e.preventDefault();
     e.stopPropagation();
 
     if (isInCart(game._id)) return;
-    setCart([...cart, game]);
+    addToCart(game as any);
   };
 
   if (loading) {

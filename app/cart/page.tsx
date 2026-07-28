@@ -2,38 +2,22 @@
 
 import { Trash2, ArrowRight, CreditCard } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
-
-interface Game {
-  _id: string;
-  title: string;
-  price: string;
-  image: string;
-  category: string;
-  desc?: string;
-  tags?: string[];
-}
+import { useCart } from "@/components/CartContext";
 
 export default function CartPage() {
   const router = useRouter();
-  const [cart, setCart] = useLocalStorage<Game[]>("cart", []);
+  const { cart, removeFromCart } = useCart();
 
-  const safeCart = cart ?? [];
-
-  const totalPrice = safeCart.reduce(
+  const totalPrice = cart.reduce(
     (acc, game) => acc + (parseFloat(game.price) || 0),
     0
   );
-
-  const removeItem = (id: string) => {
-    setCart(safeCart.filter((item) => item._id !== id));
-  };
 
   return (
     <div className="bg-white dark:bg-[#1b2838] border border-gray-200 dark:border-white/5 rounded-xl p-6 shadow-2xl animate-in fade-in duration-500">
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-2xl font-black text-gray-900 dark:text-white">
-          سبد خرید شما ({safeCart.length})
+          سبد خرید شما ({cart.length})
         </h2>
         <button
           onClick={() => router.push("/")}
@@ -43,13 +27,13 @@ export default function CartPage() {
         </button>
       </div>
 
-      {safeCart.length === 0 ? (
+      {cart.length === 0 ? (
         <div className="py-20 text-center text-gray-500 italic border-2 border-dashed border-gray-200 dark:border-white/5 rounded-xl">
           سبد خرید شما خالی است.
         </div>
       ) : (
         <div className="space-y-4">
-          {safeCart.map((game) => (
+          {cart.map((game) => (
             <div
               key={game._id}
               className="flex items-center justify-between bg-gray-50 dark:bg-black/20 p-4 rounded-lg border border-gray-200 dark:border-white/5"
@@ -69,7 +53,7 @@ export default function CartPage() {
                 </div>
               </div>
               <button
-                onClick={() => removeItem(game._id)}
+                onClick={() => removeFromCart(game._id)}
                 className="text-red-500 hover:bg-red-500/10 p-2 rounded transition"
               >
                 <Trash2 size={18} />

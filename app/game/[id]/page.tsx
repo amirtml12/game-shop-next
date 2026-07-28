@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useCart } from "@/components/CartContext";
 
 interface RequirementSpec {
   os?: string;
@@ -35,8 +34,8 @@ export default function GameDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
-  const [cart, setCart] = useLocalStorage<Game[]>("cart", []);
-  const isInCart = game ? cart.some((item) => item._id === game._id) : false;
+  const { addToCart, isInCart } = useCart();
+  const inCart = game ? isInCart(game._id) : false;
 
   useEffect(() => {
     if (!id) return;
@@ -63,8 +62,8 @@ export default function GameDetailsPage() {
   }, [id]);
 
   const handleAddToCart = () => {
-    if (!game || isInCart) return;
-    setCart([...cart, game]);
+    if (!game || inCart) return;
+    addToCart(game);
   };
 
   if (loading) {
@@ -131,14 +130,14 @@ export default function GameDetailsPage() {
           <div className="flex flex-wrap items-center gap-4 pt-4">
             <button
               onClick={handleAddToCart}
-              disabled={isInCart}
+              disabled={inCart}
               className={`px-8 py-3 rounded-lg font-bold transition-all transform hover:scale-105 ${
-                isInCart
+                inCart
                   ? "bg-green-600/20 text-green-400 cursor-default"
                   : "bg-green-600 hover:bg-green-700 text-white"
               }`}
             >
-              {isInCart ? "به سبد اضافه شد ✓" : "افزودن به سبد خرید"}
+              {inCart ? "به سبد اضافه شد ✓" : "افزودن به سبد خرید"}
             </button>
 
             <button

@@ -6,10 +6,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import axios from "axios";
 import { useTheme } from "@/components/ThemeContext";
+import { useCart } from "@/components/CartContext";
 
 export interface NavbarProps {
   onLogoClick?: () => void;
-  cartCount?: number;
 }
 
 interface UserData {
@@ -19,10 +19,11 @@ interface UserData {
   role: string;
 }
 
-function Navbar({ onLogoClick, cartCount = 0 }: NavbarProps) {
+function Navbar({ onLogoClick }: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { darkMode, setDarkMode } = useTheme();
+  const { cartCount } = useCart();
 
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
