@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Gamepad2, ShoppingCart, Sun, Moon, User, LayoutDashboard, LogOut } from "lucide-react";
+import { Gamepad2, ShoppingCart, Sun, Moon, User, LayoutDashboard, LogOut, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import axios from "axios";
@@ -27,6 +27,7 @@ function Navbar({ onLogoClick }: NavbarProps) {
 
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => pathname === path;
 
@@ -51,13 +52,19 @@ function Navbar({ onLogoClick }: NavbarProps) {
     };
   }, [pathname]);
 
+  // با تغییر مسیر، منوی موبایل خودکار بسته بشه
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
   const handleLogout = async () => {
     const confirmed = window.confirm("آیا از خروج از حساب کاربری خود مطمئن هستید؟");
     if (!confirmed) return;
+
     try {
       await axios.post("/api/logout", {}, { withCredentials: true });
     } catch {
-
+      // ignore
     } finally {
       setUser(null);
       router.push("/");
@@ -65,10 +72,16 @@ function Navbar({ onLogoClick }: NavbarProps) {
     }
   };
 
+  const navLinks = [
+    { href: "/", label: "صفحه اصلی" },
+    { href: "/about", label: "درباره ما" },
+    { href: "/support", label: "پشتیبانی" },
+  ];
+
   return (
     <nav className="bg-white dark:bg-[#151921] p-4 border-b border-blue-500/20 sticky top-0 z-50 shadow-xl transition-colors duration-500">
       <div className="container mx-auto flex justify-between items-center">
-
+        
         {/* بخش سمت راست: لوگو و دکمه ادمین */}
         <div className="flex items-center gap-5">
           <Link
@@ -88,10 +101,11 @@ function Navbar({ onLogoClick }: NavbarProps) {
           {user?.role === "admin" && (
             <Link
               href="/admin"
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${isActive("/admin")
+              className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                isActive("/admin")
                   ? "bg-red-600 text-white border-red-600"
                   : "bg-red-600/10 text-red-500 border-red-600/30 hover:bg-red-600 hover:text-white"
-                }`}
+              }`}
             >
               <LayoutDashboard size={14} />
               پنل مدیریت
@@ -99,40 +113,26 @@ function Navbar({ onLogoClick }: NavbarProps) {
           )}
         </div>
 
-        {/* بخش میانی: منوی ناوبری */}
+        {/* بخش میانی: منوی ناوبری - فقط دسکتاپ */}
         <div className="hidden md:flex items-center gap-8 text-sm font-bold">
-          <Link
-            href="/"
-            className={`${isActive("/")
-                ? "text-blue-500"
-                : "hover:text-blue-400 text-gray-600 dark:text-gray-300"
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`${
+                isActive(link.href)
+                  ? "text-blue-500"
+                  : "hover:text-blue-400 text-gray-600 dark:text-gray-300"
               } transition-colors`}
-          >
-            صفحه اصلی
-          </Link>
-          <Link
-            href="/about"
-            className={`${isActive("/about")
-                ? "text-blue-500"
-                : "hover:text-blue-400 text-gray-600 dark:text-gray-300"
-              } transition-colors`}
-          >
-            درباره ما
-          </Link>
-          <Link
-            href="/support"
-            className={`${isActive("/support")
-                ? "text-blue-500"
-                : "hover:text-blue-400 text-gray-600 dark:text-gray-300"
-              } transition-colors`}
-          >
-            پشتیبانی
-          </Link>
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
 
-        {/* بخش سمت چپ: تغییر تم، ورود/کاربر و سبد خرید */}
-        <div className="flex items-center gap-4 md:gap-6">
-
+        {/* بخش سمت چپ: تغییر تم، ورود/کاربر، سبد خرید و دکمه منوی موبایل */}
+        <div className="flex items-center gap-2 md:gap-6">
+          
           {/* سوئیچ تم */}
           <button
             onClick={() => setDarkMode(!darkMode)}
@@ -142,40 +142,43 @@ function Navbar({ onLogoClick }: NavbarProps) {
             {darkMode ? <Sun size={20} /> : <Moon size={20} className="text-gray-600" />}
           </button>
 
-          {/* وضعیت لاگین: در حال بارگذاری / لاگین شده / لاگین نشده */}
-          {loading ? (
-            <div className="w-24 h-9 rounded-2xl bg-gray-200 dark:bg-white/5 animate-pulse" />
-          ) : user ? (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 text-xs font-black px-4 py-2.5 rounded-2xl border text-gray-700 border-gray-200 bg-gray-50 dark:text-gray-200 dark:border-white/10 dark:bg-white/5">
-                <User size={16} className="text-blue-500" />
-                <span className="hidden sm:inline">{user.name}</span>
+          {/* وضعیت لاگین - مخفی تو صفحات خیلی کوچیک، برای صرفه‌جویی در جا */}
+          <div className="hidden sm:block">
+            {loading ? (
+              <div className="w-24 h-9 rounded-2xl bg-gray-200 dark:bg-white/5 animate-pulse" />
+            ) : user ? (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-xs font-black px-4 py-2.5 rounded-2xl border text-gray-700 border-gray-200 bg-gray-50 dark:text-gray-200 dark:border-white/10 dark:bg-white/5">
+                  <User size={16} className="text-blue-500" />
+                  <span className="hidden sm:inline">{user.name}</span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  title="خروج از حساب"
+                  className="p-2.5 rounded-2xl border border-transparent hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-all"
+                >
+                  <LogOut size={18} />
+                </button>
               </div>
-              <button
-                onClick={handleLogout}
-                title="خروج از حساب"
-                className="p-2.5 rounded-2xl border border-transparent hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-all"
+            ) : (
+              <Link
+                href="/auth"
+                className="flex items-center gap-2 text-xs font-black px-5 py-2.5 rounded-2xl border transition-all text-gray-700 border-gray-200 bg-gray-50 hover:bg-gray-100 dark:text-gray-300 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:hover:text-white"
               >
-                <LogOut size={18} />
-              </button>
-            </div>
-          ) : (
-            <Link
-              href="/auth"
-              className="flex items-center gap-2 text-xs font-black px-5 py-2.5 rounded-2xl border transition-all text-gray-700 border-gray-200 bg-gray-50 hover:bg-gray-100 dark:text-gray-300 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:hover:text-white"
-            >
-              <User size={16} className="text-blue-500" />
-              <span className="hidden sm:inline">ورود / عضویت</span>
-            </Link>
-          )}
+                <User size={16} className="text-blue-500" />
+                <span className="hidden sm:inline">ورود / عضویت</span>
+              </Link>
+            )}
+          </div>
 
           {/* سبد خرید با نشانگر تعداد */}
           <Link
             href="/cart"
-            className={`relative p-2.5 rounded-2xl border transition-all group ${isActive("/cart")
+            className={`relative p-2.5 rounded-2xl border transition-all group ${
+              isActive("/cart")
                 ? "bg-blue-600 border-blue-600 text-white"
                 : "border-transparent hover:bg-blue-500/10 text-gray-400 hover:text-blue-400"
-              }`}
+            }`}
           >
             <ShoppingCart size={22} />
             {cartCount > 0 && (
@@ -185,8 +188,72 @@ function Navbar({ onLogoClick }: NavbarProps) {
             )}
           </Link>
 
+          {/* دکمه‌ی منوی همبرگری - فقط موبایل */}
+          <button
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            className="md:hidden p-2.5 rounded-2xl hover:bg-gray-500/10 transition-all text-gray-600 dark:text-gray-300"
+            title="منو"
+          >
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+
         </div>
       </div>
+
+      {/* منوی موبایل باز‌شونده */}
+      {mobileMenuOpen && (
+        <div className="md:hidden mt-4 pb-2 border-t border-gray-200 dark:border-white/10 pt-4 space-y-3">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`block px-2 py-2 rounded-lg text-sm font-bold ${
+                isActive(link.href)
+                  ? "text-blue-500 bg-blue-500/10"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5"
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
+
+          {user?.role === "admin" && (
+            <Link
+              href="/admin"
+              className="flex items-center gap-2 px-2 py-2 rounded-lg text-sm font-bold text-red-500 hover:bg-red-500/10"
+            >
+              <LayoutDashboard size={16} />
+              پنل مدیریت
+            </Link>
+          )}
+
+          <div className="sm:hidden pt-2 border-t border-gray-200 dark:border-white/10">
+            {loading ? null : user ? (
+              <div className="flex items-center justify-between px-2 py-2">
+                <div className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-200">
+                  <User size={16} className="text-blue-500" />
+                  {user.name}
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="text-red-400 hover:text-red-500 transition-colors"
+                  title="خروج"
+                >
+                  <LogOut size={18} />
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/auth"
+                className="flex items-center gap-2 px-2 py-2 rounded-lg text-sm font-bold text-blue-500"
+              >
+                <User size={16} />
+                ورود / عضویت
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
