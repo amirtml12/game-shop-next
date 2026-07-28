@@ -20,7 +20,7 @@
 - **React Context API** — مدیریت state سراسری (سبد خرید، تم روشن/تاریک)
 
 ### بک‌اند
-- **Next.js API Routes (Route Handlers)** — کل بک‌اند به‌جای سرور Express جداگانه، داخل خود Next.js پیاده‌سازی شده
+- **Node.js/Next.js API Routes (Route Handlers)** — کل بک‌اند به‌جای سرور Express جداگانه، داخل خود Next.js پیاده‌سازی شده
 - **MongoDB Atlas** — دیتابیس ابری NoSQL
 - **Mongoose** — ODM برای مدل‌سازی و ارتباط با MongoDB
 - **JWT (jsonwebtoken)** — مدیریت نشست کاربران با توکن و کوکی httpOnly
