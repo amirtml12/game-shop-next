@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎮 Steam Store Clone (Next.js)
 
-## Getting Started
+این پروژه یک **پروژه‌ی شخصی و آموزشی** است که با هدف یادگیری عمیق‌تر **Next.js**، **TypeScript** و توسعه‌ی فول‌استک ساخته شده است. این یک پروژه‌ی سفارشی برای مشتری یا کارفرمای خاصی نیست؛ بلکه نمونه‌ای از توانایی‌های فنی من در ساخت یک اپلیکیشن وب کامل، از طراحی رابط کاربری تا مدیریت دیتابیس و احراز هویت است.
 
-First, run the development server:
+پروژه در ابتدا با **React (Vite) + Node.js/Express + MongoDB** نوشته شده بود و سپس به‌طور کامل به **Next.js (App Router) + TypeScript** بازنویسی و ارتقا یافت.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🔗 دمو زنده
+سایت به‌صورت زنده در آدرس زیر در دسترس است:
+👉 [https://amirtml-gameshop.netlify.app/](https://amirtml-gameshop.netlify.app/)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ تکنولوژی‌ها و ابزارهای استفاده‌شده
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### فرانت‌اند
+- **Next.js 15 (App Router)** — فریم‌ورک اصلی، شامل Server و Client Components
+- **TypeScript** — برای type-safety کامل در سراسر پروژه
+- **Tailwind CSS** — استایل‌دهی و طراحی ریسپانسیو
+- **Framer Motion** — انیمیشن‌های ترنزیشن بین صفحات
+- **Lucide React** — آیکون‌ها
+- **Axios** — ارتباط با API
+- **React Context API** — مدیریت state سراسری (سبد خرید، تم روشن/تاریک)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### بک‌اند
+- **Next.js API Routes (Route Handlers)** — کل بک‌اند به‌جای سرور Express جداگانه، داخل خود Next.js پیاده‌سازی شده
+- **MongoDB Atlas** — دیتابیس ابری NoSQL
+- **Mongoose** — ODM برای مدل‌سازی و ارتباط با MongoDB
+- **JWT (jsonwebtoken)** — مدیریت نشست کاربران با توکن و کوکی httpOnly
+- **bcryptjs** — هش کردن امن رمز عبور کاربران
 
-## Learn More
+### زیرساخت و ابزارها
+- **MongoDB Atlas** — هاست دیتابیس ابری
+- **Netlify** — دیپلوی و هاست پروژه
+- **Git / GitHub** — کنترل نسخه
+- **tsx** — اجرای اسکریپت‌های TypeScript (seed کردن دیتابیس)
 
-To learn more about Next.js, take a look at the following resources:
+## ✨ امکانات پیاده‌سازی‌شده
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- ثبت‌نام و ورود کاربران با رمز عبور هش‌شده (bcrypt) و نشست مبتنی بر JWT
+- سبد خرید مجزا برای هر کاربر (ذخیره‌سازی جداگانه بر اساس شناسه‌ی کاربر)
+- الزام ورود به حساب کاربری پیش از افزودن به سبد خرید
+- پنل مدیریت (Admin Panel) برای مدیریت بازی‌ها، با محافظت بر اساس نقش کاربر (role-based access)
+- حالت روشن/تاریک (Dark/Light Mode) با ذخیره‌سازی ترجیح کاربر
+- طراحی کاملاً ریسپانسیو (موبایل، تبلت، دسکتاپ) همراه با منوی موبایل (Hamburger Menu)
+- جستجو و فیلتر بازی‌ها بر اساس دسته‌بندی
+- صفحه‌ی جزئیات بازی و صفحه‌ی دانلود اختصاصی برای هر بازی
+- مدیریت اتصال بهینه به دیتابیس در محیط Serverless (جلوگیری از اتصال‌های تکراری و مرده)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📂 ساختار پروژه
