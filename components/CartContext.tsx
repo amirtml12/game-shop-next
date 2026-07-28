@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import axios from "axios";
 
 export interface CartGame {
@@ -20,6 +20,7 @@ interface CartContextType {
   removeFromCart: (id: string) => void;
   isInCart: (id: string) => boolean;
   cartCount: number;
+  isLoggedIn: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -30,11 +31,11 @@ function getCartKey(userId: string | null) {
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [cart, setCart] = useState<CartGame[]>([]);
   const [ready, setReady] = useState(false);
 
-  // هر بار مسیر عوض شد (مثلاً بعد از لاگین/لاگ‌اوت)، کاربر فعلی رو دوباره چک کن
   useEffect(() => {
     let isMounted = true;
 
@@ -50,7 +51,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (!isMounted) return;
 
       setUserId((prevUserId) => {
-        // اگه کاربر عوض شده (لاگین/لاگ‌اوت/کاربر دیگه)، سبد رو از کلید جدید بخون
         if (prevUserId !== currentUserId) {
           const key = getCartKey(currentUserId);
           const saved = localStorage.getItem(key);
@@ -77,7 +77,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
   }, [pathname]);
 
-  // هر بار cart عوض شد، تو کلید مخصوص همون کاربر ذخیره کن
   useEffect(() => {
     if (!ready) return;
     const key = getCartKey(userId);
@@ -85,6 +84,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [cart, userId, ready]);
 
   const addToCart = (game: CartGame) => {
+    if (!userId) {
+      alert("برای افزودن به سبد خرید، ابتدا وارد حساب کاربری خود شوید.");
+      router.push("/auth");
+      return;
+    }
     setCart((prev) => (prev.some((item) => item._id === game._id) ? prev : [...prev, game]));
   };
 
@@ -96,7 +100,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, removeFromCart, isInCart, cartCount: cart.length }}
+      value={{ cart, addToCart, removeFromCart, isInCart, cartCount: cart.length, isLoggedIn: !!userId }}
     >
       {children}
     </CartContext.Provider>
