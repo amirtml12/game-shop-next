@@ -1,7 +1,8 @@
-// components/CartContext.tsx
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import axios from "axios";
 
 export interface CartGame {
   _id: string;
@@ -23,28 +24,65 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+function getCartKey(userId: string | null) {
+  return userId ? `cart_${userId}` : "cart_guest";
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const [userId, setUserId] = useState<string | null>(null);
   const [cart, setCart] = useState<CartGame[]>([]);
-  const [mounted, setMounted] = useState(false);
+  const [ready, setReady] = useState(false);
 
-  // خواندن سبد از localStorage فقط یک بار، موقع mount شدن Provider
+  // هر بار مسیر عوض شد (مثلاً بعد از لاگین/لاگ‌اوت)، کاربر فعلی رو دوباره چک کن
   useEffect(() => {
-    const saved = localStorage.getItem("cart");
-    if (saved) {
+    let isMounted = true;
+
+    const syncUserAndCart = async () => {
+      let currentUserId: string | null = null;
       try {
-        setCart(JSON.parse(saved));
+        const res = await axios.get("/api/auth/me", { withCredentials: true });
+        currentUserId = res.data.user?._id ?? null;
       } catch {
-        // اگر دیتای خراب بود نادیده بگیر
+        currentUserId = null;
       }
-    }
-    setMounted(true);
-  }, []);
 
-  // هر بار cart عوض شد، بنویس تو localStorage
+      if (!isMounted) return;
+
+      setUserId((prevUserId) => {
+        // اگه کاربر عوض شده (لاگین/لاگ‌اوت/کاربر دیگه)، سبد رو از کلید جدید بخون
+        if (prevUserId !== currentUserId) {
+          const key = getCartKey(currentUserId);
+          const saved = localStorage.getItem(key);
+          if (saved) {
+            try {
+              setCart(JSON.parse(saved));
+            } catch {
+              setCart([]);
+            }
+          } else {
+            setCart([]);
+          }
+        }
+        return currentUserId;
+      });
+
+      setReady(true);
+    };
+
+    syncUserAndCart();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [pathname]);
+
+  // هر بار cart عوض شد، تو کلید مخصوص همون کاربر ذخیره کن
   useEffect(() => {
-    if (!mounted) return;
-    localStorage.setItem("cart", JSON.stringify(cart));
-  }, [cart, mounted]);
+    if (!ready) return;
+    const key = getCartKey(userId);
+    localStorage.setItem(key, JSON.stringify(cart));
+  }, [cart, userId, ready]);
 
   const addToCart = (game: CartGame) => {
     setCart((prev) => (prev.some((item) => item._id === game._id) ? prev : [...prev, game]));
