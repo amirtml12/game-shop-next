@@ -9,6 +9,7 @@ export async function GET() {
     const games = await Game.find();
     return NextResponse.json(games);
   } catch (err) {
+    console.error("خطای دریافت بازی‌ها:", err);
     return NextResponse.json({ error: "خطا در دریافت لیست بازی‌ها" }, { status: 500 });
   }
 }
@@ -24,6 +25,7 @@ export async function POST(request: NextRequest) {
     const savedGame = await newGame.save();
     return NextResponse.json(savedGame, { status: 201 });
   } catch (err: any) {
+    console.error("خطای ذخیره بازی:", err);
     return NextResponse.json({ error: "خطا در ذخیره بازی: " + err.message }, { status: 400 });
   }
 }
