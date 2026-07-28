@@ -1,104 +1,94 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
-export interface Requirements {
-  minOS?: string;
-  minCPU?: string;
-  minRAM?: string;
-  minGPU?: string;
-  recOS?: string;
-  recCPU?: string;
-  recRAM?: string;
-  recGPU?: string;
-  storage?: string;
+interface RequirementSpec {
+  os?: string;
+  cpu?: string;
+  ram?: string;
+  gpu?: string;
 }
 
-export interface Game {
-  id: number | string;
-  _id?: string;
+interface Game {
+  _id: string;
   title: string;
   price: string;
   category: string;
   image: string;
-  description?: string;
-  requirements?: Requirements;
+  desc?: string;
+  tags?: string[];
+  requirements?: {
+    min?: RequirementSpec;
+    rec?: RequirementSpec;
+  };
 }
 
-interface GameDetailsProps {
-  game?: Game | null;
-  setView?: (view: string) => void;
-  addToCart?: (game: Game) => void;
-  featuredGames?: Game[];
-  setSelectedGame?: (game: Game) => void;
-}
-
-export default function GameDetails({
-  game,
-  setView,
-  addToCart,
-  featuredGames = [],
-  setSelectedGame,
-}: GameDetailsProps) {
+export default function GameDetailsPage() {
+  const params = useParams();
   const router = useRouter();
+  const id = params?.id as string;
 
-  // حالت ۱: اگر بازی انتخاب نشده باشد (نمایش بازی‌های پیشنهادی)
-  if (!game) {
+  const [game, setGame] = useState<Game | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
+  const [cart, setCart] = useLocalStorage<Game[]>("cart", []);
+  const isInCart = game ? cart.some((item) => item._id === game._id) : false;
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchGame = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/games/${id}`);
+        if (!res.ok) {
+          setNotFound(true);
+          return;
+        }
+        const data = await res.json();
+        setGame(data);
+      } catch (err) {
+        console.error("خطا در دریافت بازی:", err);
+        setNotFound(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGame();
+  }, [id]);
+
+  const handleAddToCart = () => {
+    if (!game || isInCart) return;
+    setCart([...cart, game]);
+  };
+
+  if (loading) {
     return (
-      <div className="space-y-8">
-        <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-bold bg-gradient-to-l from-blue-500 to-transparent pr-4 border-r-4 border-blue-600 text-white">
-            بازی‌های پیشنهادی برای شما
-          </h3>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {featuredGames.map((item) => (
-            <motion.div
-              key={item.id}
-              onClick={() => {
-                if (setSelectedGame) setSelectedGame(item);
-                router.push(`/game/${item.id}`);
-              }}
-              whileHover={{ scale: 1.02, y: -5 }}
-              className="relative bg-[#1a1f29] p-4 rounded-2xl border border-white/5 cursor-pointer overflow-hidden group transition-all"
-            >
-              <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur opacity-0 group-hover:opacity-20 transition duration-500"></div>
-
-              <div className="relative flex gap-5 items-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={item.image}
-                  className="w-28 h-28 object-cover rounded-xl shadow-lg group-hover:rotate-2 transition-transform duration-300"
-                  alt={item.title}
-                />
-                <div className="flex-1">
-                  <h4 className="font-bold text-white group-hover:text-blue-400 transition">
-                    {item.title}
-                  </h4>
-                  <p className="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed">
-                    تجربه‌ای متفاوت در سبک {item.category} با گرافیک خیره‌کننده.
-                  </p>
-                  <div className="flex justify-between items-center mt-3">
-                    <span className="text-green-400 font-mono font-bold">
-                      {item.price}
-                    </span>
-                    <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded">
-                      مشاهده جزئیات
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+      <div className="min-h-[50vh] flex items-center justify-center text-blue-500 font-bold">
+        در حال دریافت اطلاعات بازی...
       </div>
     );
   }
 
-  // حالت ۲: نمایش جزئیات بازی انتخاب شده
+  if (notFound || !game) {
+    return (
+      <div className="min-h-[50vh] flex flex-col items-center justify-center gap-4 text-gray-400">
+        <p>بازی مورد نظر پیدا نشد.</p>
+        <button
+          onClick={() => router.push("/")}
+          className="text-blue-400 hover:underline text-sm"
+        >
+          ← بازگشت به لیست بازی‌ها
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8" dir="rtl">
       {/* دکمه بازگشت سریع */}
@@ -123,19 +113,36 @@ export default function GameDetails({
               {game.category}
             </span>
           </div>
-          <p className="text-gray-400 leading-relaxed">{game.description}</p>
+          <p className="text-gray-400 leading-relaxed">{game.desc}</p>
+
+          {game.tags && game.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {game.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="text-[11px] bg-white/5 text-gray-300 px-2 py-1 rounded-full"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center gap-4 pt-4">
-            {addToCart && (
-              <button
-                onClick={() => addToCart(game)}
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-bold transition-all transform hover:scale-105"
-              >
-                افزودن به سبد خرید
-              </button>
-            )}
+            <button
+              onClick={handleAddToCart}
+              disabled={isInCart}
+              className={`px-8 py-3 rounded-lg font-bold transition-all transform hover:scale-105 ${
+                isInCart
+                  ? "bg-green-600/20 text-green-400 cursor-default"
+                  : "bg-green-600 hover:bg-green-700 text-white"
+              }`}
+            >
+              {isInCart ? "به سبد اضافه شد ✓" : "افزودن به سبد خرید"}
+            </button>
 
             <button
-              onClick={() => router.push(`/download/${game.id}`)}
+              onClick={() => router.push(`/download/${game._id}`)}
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-bold transition-all"
             >
               دانلود بازی
@@ -158,19 +165,19 @@ export default function GameDetails({
           <ul className="space-y-3 text-sm text-gray-300">
             <li>
               <span className="text-gray-500">OS:</span>{" "}
-              {game.requirements?.minOS || "Windows 10"}
+              {game.requirements?.min?.os || "Windows 10"}
             </li>
             <li>
               <span className="text-gray-500">Processor:</span>{" "}
-              {game.requirements?.minCPU || "Intel Core i5"}
+              {game.requirements?.min?.cpu || "Intel Core i5"}
             </li>
             <li>
               <span className="text-gray-500">Memory:</span>{" "}
-              {game.requirements?.minRAM || "8 GB"}
+              {game.requirements?.min?.ram || "8 GB"}
             </li>
             <li>
               <span className="text-gray-500">Graphics:</span>{" "}
-              {game.requirements?.minGPU || "GTX 1050"}
+              {game.requirements?.min?.gpu || "GTX 1050"}
             </li>
           </ul>
         </div>
@@ -183,19 +190,19 @@ export default function GameDetails({
           <ul className="space-y-3 text-sm text-gray-300">
             <li>
               <span className="text-gray-500">OS:</span>{" "}
-              {game.requirements?.recOS || "Windows 11"}
+              {game.requirements?.rec?.os || "Windows 11"}
             </li>
             <li>
               <span className="text-gray-500">Processor:</span>{" "}
-              {game.requirements?.recCPU || "Intel Core i7"}
+              {game.requirements?.rec?.cpu || "Intel Core i7"}
             </li>
             <li>
               <span className="text-gray-500">Memory:</span>{" "}
-              {game.requirements?.recRAM || "16 GB"}
+              {game.requirements?.rec?.ram || "16 GB"}
             </li>
             <li>
               <span className="text-gray-500">Graphics:</span>{" "}
-              {game.requirements?.recGPU || "RTX 3060"}
+              {game.requirements?.rec?.gpu || "RTX 3060"}
             </li>
           </ul>
         </div>
