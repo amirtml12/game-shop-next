@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   FaPlus, FaTrash, FaEdit, FaSave, FaTimes, FaSearch,
-  FaGamepad, FaTags, FaDesktop, FaServer, FaUsers, FaUserShield
+  FaGamepad, FaTags, FaDesktop, FaServer, FaUsers, FaUserShield,
+  FaHeadset, FaEnvelope, FaEnvelopeOpen
 } from "react-icons/fa";
 
 export interface RequirementSpec {
@@ -34,6 +35,15 @@ export interface AppUser {
   role: string;
 }
 
+export interface SupportMessage {
+  _id: string;
+  name: string;
+  email: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
 const emptyGameForm = {
   title: "",
   price: "",
@@ -48,7 +58,7 @@ const emptyGameForm = {
 };
 
 export default function AdminPanel({ categories = ["Action", "RPG", "Sports", "Strategy", "Adventure"] }: { categories?: string[] }) {
-  const [activeTab, setActiveTab] = useState<"games" | "users">("games");
+  const [activeTab, setActiveTab] = useState<"games" | "users" | "support">("games");
 
   // ---------- بازی‌ها ----------
   const [games, setGames] = useState<Game[]>([]);
@@ -110,11 +120,12 @@ export default function AdminPanel({ categories = ["Action", "RPG", "Sports", "S
 
   const saveEdit = async () => {
     if (!editingId) return;
+    const { _id, ...payload } = editForm;
     try {
       const res = await fetch(`/api/games/${editingId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -214,6 +225,72 @@ export default function AdminPanel({ categories = ["Action", "RPG", "Sports", "S
     u.email.toLowerCase().includes(userSearch.toLowerCase())
   );
 
+  // ---------- پیام‌های پشتیبانی ----------
+  const [messages, setMessages] = useState<SupportMessage[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [messageSearch, setMessageSearch] = useState("");
+
+  const fetchMessages = useCallback(async () => {
+    setLoadingMessages(true);
+    try {
+      const res = await fetch("/api/support");
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "خطا در دریافت پیام‌ها");
+        return;
+      }
+      setMessages(data);
+    } catch {
+      alert("خطا در ارتباط با سرور");
+    } finally {
+      setLoadingMessages(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "support") fetchMessages();
+  }, [activeTab, fetchMessages]);
+
+  const toggleRead = async (msg: SupportMessage) => {
+    try {
+      const res = await fetch(`/api/support/${msg._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isRead: !msg.isRead }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "خطا در ویرایش پیام");
+        return;
+      }
+      setMessages(messages.map(m => m._id === msg._id ? data : m));
+    } catch {
+      alert("خطا در ارتباط با سرور");
+    }
+  };
+
+  const deleteMessage = async (id: string) => {
+    if (!confirm("مطمئنی می‌خوای این پیام رو حذف کنی؟")) return;
+    try {
+      const res = await fetch(`/api/support/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "خطا در حذف پیام");
+        return;
+      }
+      setMessages(messages.filter(m => m._id !== id));
+    } catch {
+      alert("خطا در ارتباط با سرور");
+    }
+  };
+
+  const filteredMessages = messages.filter(m =>
+    m.name.toLowerCase().includes(messageSearch.toLowerCase()) ||
+    m.email.toLowerCase().includes(messageSearch.toLowerCase())
+  );
+
+  const unreadCount = messages.filter(m => !m.isRead).length;
+
   return (
     <div className="space-y-8 pb-20 animate-in fade-in duration-500" dir="rtl">
 
@@ -230,6 +307,17 @@ export default function AdminPanel({ categories = ["Action", "RPG", "Sports", "S
           className={`px-5 py-2 rounded-xl font-bold flex items-center gap-2 transition ${activeTab === "users" ? "bg-blue-600 text-white" : "bg-white/5 text-gray-400"}`}
         >
           <FaUsers /> کاربران
+        </button>
+        <button
+          onClick={() => setActiveTab("support")}
+          className={`relative px-5 py-2 rounded-xl font-bold flex items-center gap-2 transition ${activeTab === "support" ? "bg-blue-600 text-white" : "bg-white/5 text-gray-400"}`}
+        >
+          <FaHeadset /> پیام‌های پشتیبانی
+          {unreadCount > 0 && (
+            <span className="bg-red-500 text-white text-[10px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-black">
+              {unreadCount}
+            </span>
+          )}
         </button>
       </div>
 
@@ -397,6 +485,68 @@ export default function AdminPanel({ categories = ["Action", "RPG", "Sports", "S
               ))}
               {filteredUsers.length === 0 && (
                 <p className="text-gray-500 text-center py-10">کاربری یافت نشد.</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === "support" && (
+        <div className="space-y-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <h2 className="text-xl font-bold text-gray-300">پیام‌های پشتیبانی</h2>
+            <div className="relative w-full md:w-80">
+              <FaSearch className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500" />
+              <input
+                placeholder="جستجو بر اساس نام یا ایمیل..."
+                className="w-full bg-[#1a1f29] border border-white/10 rounded-full py-2 pr-10 pl-4 text-sm focus:border-blue-500 outline-none text-white"
+                value={messageSearch}
+                onChange={e => setMessageSearch(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {loadingMessages ? (
+            <p className="text-gray-400 text-center py-10">در حال بارگذاری...</p>
+          ) : (
+            <div className="grid gap-4">
+              {filteredMessages.map(msg => (
+                <div
+                  key={msg._id}
+                  className={`bg-[#1a1f29] border p-5 rounded-2xl transition-all ${msg.isRead ? "border-white/5" : "border-blue-500/40"}`}
+                >
+                  <div className="flex flex-wrap md:flex-nowrap items-start gap-4">
+                    <div className={`p-3 rounded-xl ${msg.isRead ? "bg-gray-500/10 text-gray-400" : "bg-blue-500/20 text-blue-400"}`}>
+                      {msg.isRead ? <FaEnvelopeOpen /> : <FaEnvelope />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h4 className="font-bold text-white text-base">{msg.name}</h4>
+                        <span className="text-blue-400 text-xs">{msg.email}</span>
+                        {!msg.isRead && (
+                          <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full font-bold">
+                            جدید
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-gray-400 text-sm mt-2 leading-relaxed whitespace-pre-wrap">
+                        {msg.message}
+                      </p>
+                      <p className="text-gray-600 text-[11px] mt-2">
+                        {new Date(msg.createdAt).toLocaleString("fa-IR")}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => toggleRead(msg)} className="admin-btn-edit text-xs px-4">
+                        {msg.isRead ? "علامت‌گذاری نخوانده" : "علامت‌گذاری خوانده‌شده"}
+                      </button>
+                      <button onClick={() => deleteMessage(msg._id)} className="admin-btn-delete"><FaTrash /></button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {filteredMessages.length === 0 && (
+                <p className="text-gray-500 text-center py-10">پیامی یافت نشد.</p>
               )}
             </div>
           )}

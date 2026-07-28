@@ -6,11 +6,37 @@ import { FaHeadset, FaPaperPlane, FaCheckCircle } from "react-icons/fa";
 
 export default function SupportPage() {
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const [form, setForm] = useState({ name: "", email: "", message: "" });
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // در این بخش می‌توانید درخواست ارسال پیام را به API متصل کنید
-    setSubmitted(true);
+    setError("");
+    setSubmitting(true);
+
+    try {
+      const res = await fetch("/api/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "خطا در ارسال پیام");
+        return;
+      }
+
+      setSubmitted(true);
+      setForm({ name: "", email: "", message: "" });
+    } catch {
+      setError("خطا در ارتباط با سرور");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -32,6 +58,12 @@ export default function SupportPage() {
               </div>
             </div>
 
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-3 rounded-xl">
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4 pt-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -39,6 +71,8 @@ export default function SupportPage() {
                   <input
                     required
                     type="text"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition text-white"
                     placeholder="مثلاً علی..."
                   />
@@ -48,6 +82,8 @@ export default function SupportPage() {
                   <input
                     required
                     type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition text-white"
                     placeholder="email@example.com"
                   />
@@ -58,15 +94,18 @@ export default function SupportPage() {
                 <textarea
                   required
                   rows={4}
+                  value={form.message}
+                  onChange={(e) => setForm({ ...form, message: e.target.value })}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition resize-none text-white"
                   placeholder="چطور می‌توانیم به شما کمک کنیم؟"
                 ></textarea>
               </div>
               <button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all transform active:scale-95"
+                disabled={submitting}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all transform active:scale-95"
               >
-                <FaPaperPlane /> ارسال پیام
+                <FaPaperPlane /> {submitting ? "در حال ارسال..." : "ارسال پیام"}
               </button>
             </form>
           </motion.div>
