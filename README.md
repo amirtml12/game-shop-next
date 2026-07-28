@@ -11,11 +11,11 @@
 ## 🛠️ تکنولوژی‌ها و ابزارهای استفاده‌شده
 
 ### فرانت‌اند
-- **Next.js 15 (App Router)** — فریم‌ورک اصلی، شامل Server و Client Components
-- **TypeScript** — برای type-safety کامل در سراسر پروژه
-- **Tailwind CSS** — استایل‌دهی و طراحی ریسپانسیو
-- **Framer Motion** — انیمیشن‌های ترنزیشن بین صفحات
-- **Lucide React** — آیکون‌ها
+- **Next.js 15 (App Router)
+- **TypeScript** کامل در سراسر پروژه
+- **Tailwind CSS**
+- **Framer Motion** 
+- **Lucide React**  
 - **Axios** — ارتباط با API
 - **React Context API** — مدیریت state سراسری (سبد خرید، تم روشن/تاریک)
 
