@@ -52,10 +52,12 @@ function Navbar({ onLogoClick }: NavbarProps) {
   }, [pathname]);
 
   const handleLogout = async () => {
+    const confirmed = window.confirm("آیا از خروج از حساب کاربری خود مطمئن هستید؟");
+    if (!confirmed) return;
     try {
       await axios.post("/api/logout", {}, { withCredentials: true });
     } catch {
-      // ignore
+
     } finally {
       setUser(null);
       router.push("/");
@@ -66,7 +68,7 @@ function Navbar({ onLogoClick }: NavbarProps) {
   return (
     <nav className="bg-white dark:bg-[#151921] p-4 border-b border-blue-500/20 sticky top-0 z-50 shadow-xl transition-colors duration-500">
       <div className="container mx-auto flex justify-between items-center">
-        
+
         {/* بخش سمت راست: لوگو و دکمه ادمین */}
         <div className="flex items-center gap-5">
           <Link
@@ -86,11 +88,10 @@ function Navbar({ onLogoClick }: NavbarProps) {
           {user?.role === "admin" && (
             <Link
               href="/admin"
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                isActive("/admin")
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${isActive("/admin")
                   ? "bg-red-600 text-white border-red-600"
                   : "bg-red-600/10 text-red-500 border-red-600/30 hover:bg-red-600 hover:text-white"
-              }`}
+                }`}
             >
               <LayoutDashboard size={14} />
               پنل مدیریت
@@ -102,31 +103,28 @@ function Navbar({ onLogoClick }: NavbarProps) {
         <div className="hidden md:flex items-center gap-8 text-sm font-bold">
           <Link
             href="/"
-            className={`${
-              isActive("/")
+            className={`${isActive("/")
                 ? "text-blue-500"
                 : "hover:text-blue-400 text-gray-600 dark:text-gray-300"
-            } transition-colors`}
+              } transition-colors`}
           >
             صفحه اصلی
           </Link>
           <Link
             href="/about"
-            className={`${
-              isActive("/about")
+            className={`${isActive("/about")
                 ? "text-blue-500"
                 : "hover:text-blue-400 text-gray-600 dark:text-gray-300"
-            } transition-colors`}
+              } transition-colors`}
           >
             درباره ما
           </Link>
           <Link
             href="/support"
-            className={`${
-              isActive("/support")
+            className={`${isActive("/support")
                 ? "text-blue-500"
                 : "hover:text-blue-400 text-gray-600 dark:text-gray-300"
-            } transition-colors`}
+              } transition-colors`}
           >
             پشتیبانی
           </Link>
@@ -134,7 +132,7 @@ function Navbar({ onLogoClick }: NavbarProps) {
 
         {/* بخش سمت چپ: تغییر تم، ورود/کاربر و سبد خرید */}
         <div className="flex items-center gap-4 md:gap-6">
-          
+
           {/* سوئیچ تم */}
           <button
             onClick={() => setDarkMode(!darkMode)}
@@ -174,11 +172,10 @@ function Navbar({ onLogoClick }: NavbarProps) {
           {/* سبد خرید با نشانگر تعداد */}
           <Link
             href="/cart"
-            className={`relative p-2.5 rounded-2xl border transition-all group ${
-              isActive("/cart")
+            className={`relative p-2.5 rounded-2xl border transition-all group ${isActive("/cart")
                 ? "bg-blue-600 border-blue-600 text-white"
                 : "border-transparent hover:bg-blue-500/10 text-gray-400 hover:text-blue-400"
-            }`}
+              }`}
           >
             <ShoppingCart size={22} />
             {cartCount > 0 && (
