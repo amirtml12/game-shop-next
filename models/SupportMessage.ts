@@ -6,6 +6,7 @@ const supportMessageSchema = new Schema(
     email: { type: String, required: true },
     message: { type: String, required: true },
     isRead: { type: Boolean, default: false },
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );

@@ -1,15 +1,42 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaHeadset, FaPaperPlane, FaCheckCircle } from "react-icons/fa";
+import { FaHeadset, FaPaperPlane, FaCheckCircle, FaLock } from "react-icons/fa";
+
+interface UserData {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+}
 
 export default function SupportPage() {
+  const [user, setUser] = useState<UserData | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [message, setMessage] = useState<string>("");
 
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/auth/me", { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data.user);
+        }
+      } catch {
+        setUser(null);
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -20,7 +47,8 @@ export default function SupportPage() {
       const res = await fetch("/api/support", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        credentials: "include",
+        body: JSON.stringify({ message }),
       });
 
       const data = await res.json();
@@ -31,13 +59,41 @@ export default function SupportPage() {
       }
 
       setSubmitted(true);
-      setForm({ name: "", email: "", message: "" });
+      setMessage("");
     } catch {
       setError("خطا در ارتباط با سرور");
     } finally {
       setSubmitting(false);
     }
   };
+
+  // در حال چک‌کردن وضعیت لاگین
+  if (checkingAuth) {
+    return (
+      <div className="min-h-[40vh] flex items-center justify-center text-blue-500 font-bold">
+        در حال بررسی وضعیت ورود...
+      </div>
+    );
+  }
+
+  // کاربر لاگین نکرده
+  if (!user) {
+    return (
+      <div className="max-w-md mx-auto py-20 text-center bg-[#1a1f29] border border-white/5 p-10 rounded-3xl" dir="rtl">
+        <FaLock className="text-5xl text-blue-500 mx-auto mb-4" />
+        <h2 className="text-xl font-bold text-white mb-2">برای ارسال پیام باید وارد شوید</h2>
+        <p className="text-gray-400 text-sm mb-6">
+          تا هویت شما مشخص باشه و بتونیم سریع‌تر بهتون جواب بدیم، لطفاً اول وارد حساب کاربری‌تون بشید.
+        </p>
+        <Link
+          href="/auth"
+          className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl transition-all"
+        >
+          ورود / عضویت
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto py-12" dir="rtl">
@@ -58,44 +114,26 @@ export default function SupportPage() {
               </div>
             </div>
 
+            {/* نمایش هویت کاربر لاگین‌شده */}
+            <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-300 flex flex-wrap gap-x-6 gap-y-1">
+              <span>ارسال به نام: <span className="text-white font-bold">{user.name}</span></span>
+              <span>ایمیل: <span className="text-white font-bold">{user.email}</span></span>
+            </div>
+
             {error && (
               <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-3 rounded-xl">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs text-gray-500 mr-2">نام شما</label>
-                  <input
-                    required
-                    type="text"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition text-white"
-                    placeholder="مثلاً علی..."
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs text-gray-500 mr-2">ایمیل</label>
-                  <input
-                    required
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition text-white"
-                    placeholder="email@example.com"
-                  />
-                </div>
-              </div>
+            <form onSubmit={handleSubmit} className="space-y-4 pt-2">
               <div className="space-y-2">
-                <label className="text-xs text-gray-500 mr-2">موضوع پیام</label>
+                <label className="text-xs text-gray-500 mr-2">متن پیام</label>
                 <textarea
                   required
-                  rows={4}
-                  value={form.message}
-                  onChange={(e) => setForm({ ...form, message: e.target.value })}
+                  rows={5}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition resize-none text-white"
                   placeholder="چطور می‌توانیم به شما کمک کنیم؟"
                 ></textarea>

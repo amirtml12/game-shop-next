@@ -25,3 +25,17 @@ export function requireAdmin(
   }
   return { ok: true, user };
 }
+
+// فقط چک می‌کنه کاربر لاگین کرده یا نه (فرقی نداره نقشش چیه)
+export function requireUser(
+  request: NextRequest
+): { ok: true; user: TokenPayload } | { ok: false; response: NextResponse } {
+  const user = getAuthUser(request);
+  if (!user) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "برای ارسال پیام باید وارد شوید" }, { status: 401 }),
+    };
+  }
+  return { ok: true, user };
+}

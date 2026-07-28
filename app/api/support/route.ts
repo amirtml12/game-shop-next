@@ -1,20 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import SupportMessage from "@/models/SupportMessage";
-import { requireAdmin } from "@/lib/adminAuth";
+import User from "@/models/User";
+import { requireAdmin, requireUser } from "@/lib/adminAuth";
 
-// ثبت پیام جدید - عمومی، هرکسی می‌تونه بفرسته
+// ثبت پیام جدید - فقط کاربر لاگین‌کرده، اسم/ایمیل از حساب خودش گرفته می‌شه
 export async function POST(request: NextRequest) {
+  const auth = requireUser(request);
+  if (!auth.ok) return auth.response;
+
   try {
     await dbConnect();
     const body = await request.json();
-    const { name, email, message } = body;
+    const { message } = body;
 
-    if (!name || !email || !message) {
-      return NextResponse.json({ error: "همه فیلدها الزامی هستند" }, { status: 400 });
+    if (!message || !message.trim()) {
+      return NextResponse.json({ error: "متن پیام نمی‌تواند خالی باشد" }, { status: 400 });
     }
 
-    const newMessage = new SupportMessage({ name, email, message });
+    // اسم و ایمیل رو از دیتابیس (بر اساس کاربر لاگین‌شده) می‌گیریم، نه از بدنه‌ی درخواست
+    const userDoc = await User.findById(auth.user.userId).select("name email");
+    if (!userDoc) {
+      return NextResponse.json({ error: "کاربر پیدا نشد" }, { status: 404 });
+    }
+
+    const newMessage = new SupportMessage({
+      name: userDoc.name,
+      email: userDoc.email,
+      message,
+      userId: userDoc._id,
+    });
     await newMessage.save();
 
     return NextResponse.json({ message: "پیام با موفقیت ارسال شد" }, { status: 201 });
